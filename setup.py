@@ -8,8 +8,9 @@ __version__ = '0.0.1'
 
 setup(name='morpheus-sos-plugin',
       version=__version__,
-      description='Morpheus SOS plugin',
-      long_description='Morpheus SOS plugin',
+      description='Sosreport plugin to gather data about Morpheus and components',
+      long_description="""Sosreport is a collection of scripts that gathers system and configuration information.
+                   This package contains the Morpheus plugin for sosreport to send to support when diagnosing issues.""",
       author="Nick Celebic",
       author_email="nick@celebic.net",
       url='https://github.com/tryfan/morpheus-sos-plugin',
@@ -23,6 +24,6 @@ setup(name='morpheus-sos-plugin',
           "Intended Audience :: System Administrators",
           "Operating System :: POSIX :: Linux",
           "License :: OSI Approved :: MIT License",
-          "Programming Language :: Python :: 3",
+          "Programming Language :: Python :: 2",
       ],
       platforms='Posix')
