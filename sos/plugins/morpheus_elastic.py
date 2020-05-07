@@ -15,14 +15,14 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
     morpheus_application_yml = "/opt/morpheus/conf/application.yml"
 
     def check_es_embedded(self):
-        es_status_local = self.get_cmd_output("morpheus-ctl status elasticsearch")
+        es_status_local = self.get_command_output("morpheus-ctl status elasticsearch")
         if not es_status_local['output']:
             self.es_embedded = False
 
     def get_remote_hostnames_ports(self):
         if os.path.isfile(self.morpheus_application_yml):
             with open(self.morpheus_application_yml) as appyml:
-                appyml_data = yaml.load(appyml, Loader=yaml.FullLoader)
+                appyml_data = yaml.load(appyml, Loader=yaml.Loader)
 
         es_hosts = []
         es_config = appyml_data['environments']['production']['elasticSearch']
