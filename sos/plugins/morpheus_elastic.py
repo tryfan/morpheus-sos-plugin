@@ -6,7 +6,8 @@ import datetime
 
 
 class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
-
+    """Morpheus Embedded Elasticsearch
+    """
     short_desc = 'Morpheus ElasticSearch Service'
     plugin_name = 'morpheus_elastic'
     profiles = ('services', )

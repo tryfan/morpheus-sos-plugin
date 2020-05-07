@@ -2,7 +2,8 @@ from sos.plugins import Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin
 
 
 class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
-
+    """Morpheus UI
+    """
     short_desc = "Morpheus UI"
     plugin_name = "morpheus"
     profiles = ('services', )

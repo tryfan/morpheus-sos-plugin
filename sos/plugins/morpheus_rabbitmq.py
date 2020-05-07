@@ -6,7 +6,8 @@ from sos import utilities
 
 
 class MorpheusRabbitMQ(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
-
+    """Morpheus Embedded RabbitMQ
+    """
     short_desc = 'Morpheus RabbitMQ Service'
     plugin_name = 'morpheus_rabbitmq'
     profiles = ('services',)
