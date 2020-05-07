@@ -1,9 +1,7 @@
 from sos.plugins import Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin
-import re
 import os
 import yaml
 import datetime
-
 
 class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
     """Morpheus Embedded Elasticsearch
@@ -17,7 +15,7 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
     morpheus_application_yml = "/opt/morpheus/conf/application.yml"
 
     def check_es_embedded(self):
-        es_status_local = self.collect_cmd_output("morpheus-ctl status elasticsearch")
+        es_status_local = self.get_cmd_output("morpheus-ctl status elasticsearch")
         if not es_status_local['output']:
             self.es_embedded = False
 
