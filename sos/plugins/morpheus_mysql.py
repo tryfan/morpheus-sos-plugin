@@ -3,6 +3,7 @@ from urlparse import urlparse
 import os
 import yaml
 import ConfigParser
+import psutil
 
 # try:
 #     import pymysql
@@ -73,18 +74,23 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                 self.get_userpass()
                 os.environ['MYSQL_PWD'] = self.mysql_pass
                 ### Check size of current DB
-                # sizechecksql = (
-                #     "select SUM(size) \"total\" from (select SUM(data_length + index_length) as \"size\"  \n"
-                #     "                FROM information_schema.tables  GROUP BY table_schema) t1;")
-                # opts = "--user %s -S %s morpheus -sN -e %s" % (self.mysql_user, mysql_socket, sizechecksql)
-                # self.get_command_output()
-
-                command = "/opt/morpheus/embedded/bin/mysqldump"
-                opts = "--user %s -S %s --all-databases" % (self.mysql_user, mysql_socket)
-                name = "mysqldump_--all-databases"
-                self.add_cmd_output("%s %s" % (command, opts), suggest_filename=name)
-                # else:
-                #     self._log_warn("Could not dump Morpheus MySQL DB. Install python2-mysql")
+                sizechecksql = (
+                    "select SUM(size) \"total\" from (select SUM(data_length + index_length) as \"size\"  \n"
+                    "                FROM information_schema.tables  GROUP BY table_schema) t1;")
+                command = "/opt/morpheus/embedded/bin/mysql"
+                opts = "--user %s -S %s morpheus -sN -e %s" % (self.mysql_user, mysql_socket, sizechecksql)
+                dbsizequery = self.get_command_output("%s %s" % (command, opts))
+                dbsize = dbsizequery['output']
+                tmpsize = psutil.disk_usage('/tmp')
+                if dbsize.isdigit():
+                    if tmpsize > dbsize:
+                        command = "/opt/morpheus/embedded/bin/mysqldump"
+                        opts = "--user %s -S %s --all-databases" % (self.mysql_user, mysql_socket)
+                        name = "mysqldump_--all-databases"
+                        self.add_cmd_output("%s %s" % (command, opts), suggest_filename=name)
+                    else:
+                        self._log_warn("Not enough space in /tmp for mysqldump")
+                self._log_warn("Bad output from dbsize query")
 
     def postproc(self):
         self.do_file_sub("/opt/morpheus/embedded/mysql/ops-my.cnf",
