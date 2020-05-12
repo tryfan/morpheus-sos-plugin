@@ -85,11 +85,13 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                 tmpfilen = "/tmp/morpheusdb.%s.sql" % date.today().strftime("%Y%m%d")
                 if tmpsize > dbsize:
                     command = "/opt/morpheus/embedded/bin/mysqldump"
-                    opts = "--user %s -S %s --all-databases" % (self.mysql_user, mysql_socket)
+                    opts = "--user %s -S %s -r %s morpheus" % (self.mysql_user, mysql_socket, tmpfilen)
                     # name = "mysqldump_--all-databases"
-                    outstatus = self.get_command_output("%s %s > %s" % (command, opts, tmpfilen))
+                    outstatus = self.get_command_output("%s %s" % (command, opts))
                     if outstatus['status'] != 0:
                         self._log_warn("error with mysqldump: %s" % outstatus['output'])
+                        self.add_copy_spec(tmpfilen)
+                        os.unlink(tmpfilen)
                 else:
                     self._log_warn("Not enough space in /tmp for mysqldump")
 
