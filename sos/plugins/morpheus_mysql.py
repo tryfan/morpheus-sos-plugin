@@ -3,13 +3,6 @@ from urlparse import urlparse
 import os
 import yaml
 import ConfigParser
-from datetime import date
-
-# try:
-#     import pymysql
-#     mysqlpresent = True
-# except ImportError:
-#     mysqlpresent = False
 
 
 class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
@@ -81,31 +74,15 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                 opts = "--user %s -S %s morpheus -sN -e '%s'" % (self.mysql_user, mysql_socket, sizechecksql)
                 dbsizequery = self.get_command_output("%s %s" % (command, opts))
                 dbsize = int(dbsizequery['output'])
+
                 if dbsize > 500000000:
                     self._log_warn("Database exceeds 500M, please perform mysqldump manually if requested")
                 else:
                     command = "/opt/morpheus/embedded/bin/mysqldump"
                     opts = "--skip-lock-tables --user %s -S %s morpheus" % (self.mysql_user, mysql_socket)
                     self.add_cmd_output("%s %s" % (command, opts), sizelimit=500)
-                # stat = os.statvfs('/tmp')
-                # tmpsize = stat.f_frsize * stat.f_bfree
-                # self.tmpfilen = "/tmp/morpheusdb.%s.sql" % date.today().strftime("%Y%m%d")
-                # if tmpsize > dbsize:
-                #     command = "/opt/morpheus/embedded/bin/mysqldump"
-                #     opts = "--skip-lock-tables --user %s -S %s -r %s morpheus" % (self.mysql_user, mysql_socket, self.tmpfilen)
-                #     # name = "mysqldump_--all-databases"
-                #     outstatus = self.get_command_output("%s %s" % (command, opts))
-                #     if outstatus['status'] != 0:
-                #         self._log_warn("error with mysqldump: %s" % outstatus['output'])
-                #         self.add_copy_spec(self.tmpfilen)
-                #         #os.unlink(tmpfilen)
-                # else:
-                #     self._log_warn("Not enough space in /tmp for mysqldump")
 
     def postproc(self):
         self.do_file_sub("/opt/morpheus/embedded/mysql/ops-my.cnf",
                          r"password = (.*)",
                          r"password = ***REDACTED***")
-
-        if self.tmpfilen is not "":
-            os.unlink(self.tmpfilen)
