@@ -18,9 +18,9 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
         self.add_forbidden_path("/etc/morpheus/ssl/*")
         self.add_forbidden_path("/etc/morpheus/morpheus-secrets.json")
         self.add_cmd_output([
-            'morpheus-ctl status'
-            'find /opt/morpheus'
-            'du -sh /opt/morpheus/*'
+            'morpheus-ctl status',
+            'find /opt/morpheus',
+            'du -sh /opt/morpheus/*',
             'du -sh /var/opt/morpheus/*'
         ])
 
