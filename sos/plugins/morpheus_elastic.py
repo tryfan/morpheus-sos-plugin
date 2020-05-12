@@ -3,6 +3,7 @@ import os
 import yaml
 import datetime
 
+
 class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
     """Morpheus Embedded Elasticsearch
     """
@@ -32,7 +33,7 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
     def get_local_hostname_port(self):
         if os.path.isfile(self.morpheus_application_yml):
             with open(self.morpheus_application_yml) as appyml:
-                appyml_data = yaml.load(appyml, Loader=yaml.FullLoader)
+                appyml_data = yaml.load(appyml, Loader=yaml.Loader)
 
         es_config = appyml_data['environments']['production']['elasticSearch']
         hostname = es_config['client']['hosts'][0]['host']
