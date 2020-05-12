@@ -3,6 +3,7 @@ from urlparse import urlparse
 import os
 import yaml
 import ConfigParser
+from datetime import date
 
 # try:
 #     import pymysql
@@ -81,11 +82,14 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                 dbsize = int(dbsizequery['output'])
                 stat = os.statvfs('/tmp')
                 tmpsize = stat.f_frsize * stat.f_bfree
+                tmpfilen = "/tmp/morpheusdb.%s.sql" % date.today().strftime("%Y%m%d")
                 if tmpsize > dbsize:
                     command = "/opt/morpheus/embedded/bin/mysqldump"
                     opts = "--user %s -S %s --all-databases" % (self.mysql_user, mysql_socket)
-                    name = "mysqldump_--all-databases"
-                    self.add_cmd_output("%s %s" % (command, opts), suggest_filename=name)
+                    # name = "mysqldump_--all-databases"
+                    outstatus = self.get_command_output("%s %s > %s" % (command, opts, tmpfilen))
+                    if outstatus['status'] != 0:
+                        self._log_warn("error with mysqldump: %s" % outstatus['output'])
                 else:
                     self._log_warn("Not enough space in /tmp for mysqldump")
 
