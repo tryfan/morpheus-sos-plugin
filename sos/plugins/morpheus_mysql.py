@@ -27,6 +27,7 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
     morpheus_application_yml = "/opt/morpheus/conf/application.yml"
     mysql_user = ""
     mysql_pass = ""
+    tmpfilen = ""
 
     def check_mysql_embedded(self):
         mysql_status_local = self.get_command_output("morpheus-ctl status mysql")
@@ -82,7 +83,7 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                 dbsize = int(dbsizequery['output'])
                 stat = os.statvfs('/tmp')
                 tmpsize = stat.f_frsize * stat.f_bfree
-                tmpfilen = "/tmp/morpheusdb.%s.sql" % date.today().strftime("%Y%m%d")
+                self.tmpfilen = "/tmp/morpheusdb.%s.sql" % date.today().strftime("%Y%m%d")
                 if tmpsize > dbsize:
                     command = "/opt/morpheus/embedded/bin/mysqldump"
                     opts = "--skip-lock-tables --user %s -S %s -r %s morpheus" % (self.mysql_user, mysql_socket, tmpfilen)
@@ -91,7 +92,7 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                     if outstatus['status'] != 0:
                         self._log_warn("error with mysqldump: %s" % outstatus['output'])
                         self.add_copy_spec(tmpfilen)
-                        os.unlink(tmpfilen)
+                        #os.unlink(tmpfilen)
                 else:
                     self._log_warn("Not enough space in /tmp for mysqldump")
 
@@ -99,3 +100,6 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
         self.do_file_sub("/opt/morpheus/embedded/mysql/ops-my.cnf",
                          r"password = (.*)",
                          r"password = ***REDACTED***")
+
+        if self.tmpfilen is not "":
+            os.unlink(self.tmpfilen)
