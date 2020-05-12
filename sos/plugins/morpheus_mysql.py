@@ -85,7 +85,7 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                 tmpfilen = "/tmp/morpheusdb.%s.sql" % date.today().strftime("%Y%m%d")
                 if tmpsize > dbsize:
                     command = "/opt/morpheus/embedded/bin/mysqldump"
-                    opts = "--user %s -S %s -r %s morpheus" % (self.mysql_user, mysql_socket, tmpfilen)
+                    opts = "--skip-lock-tables --user %s -S %s -r %s morpheus" % (self.mysql_user, mysql_socket, tmpfilen)
                     # name = "mysqldump_--all-databases"
                     outstatus = self.get_command_output("%s %s" % (command, opts))
                     if outstatus['status'] != 0:
