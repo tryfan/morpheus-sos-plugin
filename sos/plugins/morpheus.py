@@ -20,8 +20,8 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
         self.add_cmd_output([
             'morpheus-ctl status'
             'find /opt/morpheus'
-            'du -s /opt/morpheus/*'
-            'du -s /var/opt/morpheus/*'
+            'du -sh /opt/morpheus/*'
+            'du -sh /var/opt/morpheus/*'
         ])
 
     def postproc(self):
