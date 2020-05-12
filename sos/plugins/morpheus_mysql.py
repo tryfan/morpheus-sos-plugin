@@ -76,7 +76,7 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                 sizechecksql = """select SUM(size) "total" from (select SUM(data_length + index_length) as "size"
                                   FROM information_schema.tables  GROUP BY table_schema) t1;"""
                 command = "/opt/morpheus/embedded/bin/mysql"
-                opts = "--user %s -S %s morpheus -sN -e %s" % (self.mysql_user, mysql_socket, sizechecksql)
+                opts = "--user %s -S %s morpheus -sN -e '%s'" % (self.mysql_user, mysql_socket, sizechecksql)
                 dbsizequery = self.get_command_output("%s %s" % (command, opts))
                 dbsize = dbsizequery['output']
                 stat = os.statvfs('/tmp')
