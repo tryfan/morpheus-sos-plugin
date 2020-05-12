@@ -3,7 +3,6 @@ from urlparse import urlparse
 import os
 import yaml
 import ConfigParser
-import psutil
 
 # try:
 #     import pymysql
@@ -81,7 +80,8 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                 opts = "--user %s -S %s morpheus -sN -e %s" % (self.mysql_user, mysql_socket, sizechecksql)
                 dbsizequery = self.get_command_output("%s %s" % (command, opts))
                 dbsize = dbsizequery['output']
-                tmpsize = psutil.disk_usage('/tmp')
+                stat = os.statvfs('/tmp')
+                tmpsize = stat.f_frsize * stat.f_bfree
                 if dbsize.isdigit():
                     if tmpsize > dbsize:
                         command = "/opt/morpheus/embedded/bin/mysqldump"
