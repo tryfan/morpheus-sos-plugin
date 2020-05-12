@@ -90,7 +90,7 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                         self.add_cmd_output("%s %s" % (command, opts), suggest_filename=name)
                     else:
                         self._log_warn("Not enough space in /tmp for mysqldump")
-                self._log_warn("Bad output from dbsize query")
+                self._log_warn("Bad output from dbsize query: %s" % dbsize)
 
     def postproc(self):
         self.do_file_sub("/opt/morpheus/embedded/mysql/ops-my.cnf",
