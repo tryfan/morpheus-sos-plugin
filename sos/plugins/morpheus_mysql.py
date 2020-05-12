@@ -2,6 +2,7 @@ from sos.plugins import Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin
 from urlparse import urlparse
 import os
 import yaml
+import ConfigParser
 
 # try:
 #     import pymysql
@@ -62,17 +63,20 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
             self.add_copy_spec("/opt/morpheus/embedded/mysql/my.cnf")
             self.add_copy_spec("/opt/morpheus/embedded/mysql/ops-my.cnf")
             self.add_cmd_output("find /var/opt/morpheus/mysql")
-            self.add_cmd_output("du -s /var/opt/morpheus/mysql/*")
+            self.add_cmd_output("du -sh /var/opt/morpheus/mysql/*")
 
-        if not self.get_option("nodbdump"):
-            # if mysqlpresent:
-            self.get_userpass()
-            os.environ['MYSQL_PWD'] = self.mysql_pass
-            opts = "--user %s --all-databases" % self.mysql_user
-            name = "mysqldump_--all-databases"
-            self.add_cmd_output("mysqldump %s" % opts, suggest_filename=name)
-            # else:
-            #     self._log_warn("Could not dump Morpheus MySQL DB. Install python2-mysql")
+            if not self.get_option("nodbdump"):
+                # if mysqlpresent:
+                config = ConfigParser.ConfigParser()
+                config.read('/opt/morpheus/embedded/mysql/my.cnf')
+                mysql_socket = config.get('mysqld', 'socket')
+                self.get_userpass()
+                os.environ['MYSQL_PWD'] = self.mysql_pass
+                opts = "--user %s -S %s --all-databases" % (self.mysql_user, mysql_socket)
+                name = "mysqldump_--all-databases"
+                self.add_cmd_output("mysqldump %s" % opts, suggest_filename=name)
+                # else:
+                #     self._log_warn("Could not dump Morpheus MySQL DB. Install python2-mysql")
 
     def postproc(self):
         self.do_file_sub("/opt/morpheus/embedded/mysql/ops-my.cnf",
