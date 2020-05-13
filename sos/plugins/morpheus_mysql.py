@@ -27,7 +27,7 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
         if not mysql_status_local['output']:
             self.mysql_embedded = False
 
-    def get_remote_hostnames_ports(self):
+    def get_remote_details(self):
         if os.path.isfile(self.morpheus_application_yml):
             with open(self.morpheus_application_yml) as appyml:
                 appyml_data = yaml.load(appyml, Loader=yaml.Loader)
@@ -59,28 +59,41 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
             self.add_copy_spec("/opt/morpheus/embedded/mysql/ops-my.cnf")
             self.add_cmd_output("find /var/opt/morpheus/mysql")
             self.add_cmd_output("du -sh /var/opt/morpheus/mysql/*")
+        else:
+            remotedb = self.get_remote_details()
 
-            if not self.get_option("nodbdump"):
-                # if mysqlpresent:
-                config = ConfigParser.ConfigParser()
-                config.read('/opt/morpheus/embedded/mysql/ops-my.cnf')
-                mysql_socket = config.get('client', 'socket')
-                self.get_userpass()
-                os.environ['MYSQL_PWD'] = self.mysql_pass
-                ### Check size of current DB
-                sizechecksql = """select SUM(size) "total" from (select SUM(data_length + index_length) as "size"
-                                  FROM information_schema.tables  GROUP BY table_schema) t1;"""
-                command = "/opt/morpheus/embedded/bin/mysql"
+        if not self.get_option("nodbdump"):
+            # if mysqlpresent:
+            config = ConfigParser.ConfigParser()
+            config.read('/opt/morpheus/embedded/mysql/ops-my.cnf')
+            mysql_socket = config.get('client', 'socket')
+            self.get_userpass()
+            os.environ['MYSQL_PWD'] = self.mysql_pass
+            # Check size of current DB
+            sizechecksql = """select SUM(size) "total" from (select SUM(data_length + index_length) as "size"
+                              FROM information_schema.tables  GROUP BY table_schema) t1;"""
+            command = "/opt/morpheus/embedded/bin/mysql"
+            if self.mysql_embedded:
                 opts = "--user %s -S %s morpheus -sN -e '%s'" % (self.mysql_user, mysql_socket, sizechecksql)
-                dbsizequery = self.get_command_output("%s %s" % (command, opts))
-                dbsize = int(dbsizequery['output'])
+            else:
+                opts = "--user %s -h %s -P %s -sN -e '%s'" \
+                       % (self.mysql_user, remotedb[0]['host'], remotedb[0]['port'], sizechecksql)
+            dbsizequery = self.get_command_output("%s %s" % (command, opts))
+            dbsize = int(dbsizequery['output'])
 
-                if dbsize > 500000000:
-                    self._log_warn("Database exceeds 500M, please perform mysqldump manually if requested")
-                else:
-                    command = "/opt/morpheus/embedded/bin/mysqldump"
+            if dbsize > 500000000:
+                self._log_warn("Database exceeds 500M, please perform mysqldump manually if requested")
+            else:
+                command = "/opt/morpheus/embedded/bin/mysqldump"
+                if self.mysql_embedded:
                     opts = "--skip-lock-tables --user %s -S %s morpheus" % (self.mysql_user, mysql_socket)
-                    self.add_cmd_output("%s %s" % (command, opts), sizelimit=500)
+                else:
+                    opts = "--skip-lock-tables --user %s -h %s -P %s" \
+                           % (self.mysql_user, remotedb[0]['host'], remotedb[0]['port'])
+                self.add_cmd_output("%s %s" % (command, opts), sizelimit=500)
+        # else:
+        #     self.get_remote_details()
+        #     self.get_userpass()
 
     def postproc(self):
         self.do_file_sub("/opt/morpheus/embedded/mysql/ops-my.cnf",
