@@ -42,7 +42,7 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                 mysql_details.append({'host': host_and_port[0], 'port': host_and_port[1]})
         else:
             endpoint = str(url_split.netloc).split(':')
-            mysql_details.append({'host': endpoint[0], 'port': endpoint[1]})
+            mysql_details.append({'host': endpoint[0], 'port': endpoint[1], 'path': url_split.path[1:]})
         return mysql_details
 
     def get_userpass(self):
@@ -89,8 +89,8 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                 if self.mysql_embedded:
                     opts = "--skip-lock-tables --user %s -S %s morpheus" % (self.mysql_user, mysql_socket)
                 else:
-                    opts = "--skip-lock-tables --user %s -h %s -P %s" \
-                           % (self.mysql_user, remotedb[0]['host'], remotedb[0]['port'])
+                    opts = "--skip-lock-tables --user %s -h %s -P %s %s" \
+                           % (self.mysql_user, remotedb[0]['host'], remotedb[0]['port'], remotedb[0]['path'])
                 self.add_cmd_output("%s %s" % (command, opts), sizelimit=500)
         # else:
         #     self.get_remote_details()
