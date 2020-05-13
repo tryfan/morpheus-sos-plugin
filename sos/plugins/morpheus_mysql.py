@@ -66,7 +66,8 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
             # if mysqlpresent:
             config = ConfigParser.ConfigParser()
             config.read('/opt/morpheus/embedded/mysql/ops-my.cnf')
-            mysql_socket = config.get('client', 'socket')
+            if self.mysql_embedded:
+                mysql_socket = config.get('client', 'socket')
             self.get_userpass()
             os.environ['MYSQL_PWD'] = self.mysql_pass
             # Check size of current DB
