@@ -39,7 +39,7 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
             endpoints = str(url_split.netloc).split(',')
             for endpoint in endpoints:
                 host_and_port = endpoint.split(':')
-                mysql_details.append({'host': host_and_port[0], 'port': host_and_port[1]})
+                mysql_details.append({'host': host_and_port[0], 'port': host_and_port[1], 'path': url_split.path[1:]})
         else:
             endpoint = str(url_split.netloc).split(':')
             mysql_details.append({'host': endpoint[0], 'port': endpoint[1], 'path': url_split.path[1:]})
