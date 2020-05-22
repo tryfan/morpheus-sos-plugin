@@ -101,7 +101,7 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
         if not self.get_option("nodbdump"):
             sizechecksql = """select SUM(size) "total" from (select SUM(data_length + index_length) as "size"
                               FROM information_schema.tables  GROUP BY table_schema) t1;"""
-            dbsizequery = self.get_command_output("%s %s" % (mysql_command, command_opts))
+            dbsizequery = self.get_command_output("%s %s '%s'" % (mysql_command, command_opts, sizechecksql))
             dbsize = int(dbsizequery['output'])
 
             if dbsize > 500000000:
