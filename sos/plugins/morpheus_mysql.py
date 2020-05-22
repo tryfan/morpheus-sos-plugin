@@ -97,7 +97,7 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                               FROM information_schema.tables  GROUP BY table_schema) t1;"""
             dbsizequery = self.get_command_output("%s -sN %s '%s'" % (mysql_command, command_opts, sizechecksql))
             dbsize = int(dbsizequery['output'])
-            self.add_string_as_file(dbsize, "morpheus_mysql_dbsize_in_B")
+            self.add_string_as_file(dbsizequery, "morpheus_mysql_dbsize_in_B")
 
             if dbsize > 500000000:
                 self._log_warn("Database exceeds 500M, please perform mysqldump manually if requested")
