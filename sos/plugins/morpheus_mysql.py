@@ -62,39 +62,54 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
         else:
             remotedb = self.get_remote_details()
 
+        mysql_command = "/opt/morpheus/embedded/bin/mysql"
+
+        config = ConfigParser.ConfigParser()
+        config.read('/opt/morpheus/embedded/mysql/ops-my.cnf')
+
+        self.get_userpass()
+        os.environ['MYSQL_PWD'] = self.mysql_pass
+
+        if self.mysql_embedded:
+            mysql_socket = config.get('client', 'socket')
+            dump_opts = "--skip-lock-tables --user %s -S %s morpheus" % (self.mysql_user, mysql_socket)
+            command_opts = "--user %s -S %s morpheus -sN -e " % (self.mysql_user, mysql_socket)
+        else:
+            dump_opts = "--skip-lock-tables --user %s -h %s -P %s %s" \
+                           % (self.mysql_user, remotedb[0]['host'], remotedb[0]['port'], remotedb[0]['path'])
+            command_opts = "--user %s -h %s -P %s -sN -e " \
+                           % (self.mysql_user, remotedb[0]['host'], remotedb[0]['port'])
+        cmd_check_charset = """SELECT TABLE_SCHEMA 
+       TABLE_NAME,
+       CCSA.CHARACTER_SET_NAME AS DEFAULT_CHAR_SET,
+       COLUMN_NAME,
+       COLUMN_TYPE,
+       C.CHARACTER_SET_NAME
+  FROM information_schema.TABLES AS T
+  JOIN information_schema.COLUMNS AS C USING (TABLE_SCHEMA, TABLE_NAME)
+  JOIN information_schema.COLLATION_CHARACTER_SET_APPLICABILITY AS CCSA
+       ON (T.TABLE_COLLATION = CCSA.COLLATION_NAME)
+ WHERE TABLE_SCHEMA=SCHEMA()
+   AND C.DATA_TYPE IN ('enum', 'varchar', 'char', 'text', 'mediumtext', 'longtext')
+ ORDER BY TABLE_SCHEMA,
+          TABLE_NAME,
+          COLUMN_NAME
+;"""
+        self.add_cmd_output("%s %s '%s'" % (mysql_command, command_opts, cmd_check_charset),
+                            suggest_filename="mysql_morpheus_charsets")
+
         if not self.get_option("nodbdump"):
-            # if mysqlpresent:
-            config = ConfigParser.ConfigParser()
-            config.read('/opt/morpheus/embedded/mysql/ops-my.cnf')
-            if self.mysql_embedded:
-                mysql_socket = config.get('client', 'socket')
-            self.get_userpass()
-            os.environ['MYSQL_PWD'] = self.mysql_pass
-            # Check size of current DB
             sizechecksql = """select SUM(size) "total" from (select SUM(data_length + index_length) as "size"
                               FROM information_schema.tables  GROUP BY table_schema) t1;"""
-            command = "/opt/morpheus/embedded/bin/mysql"
-            if self.mysql_embedded:
-                opts = "--user %s -S %s morpheus -sN -e '%s'" % (self.mysql_user, mysql_socket, sizechecksql)
-            else:
-                opts = "--user %s -h %s -P %s -sN -e '%s'" \
-                       % (self.mysql_user, remotedb[0]['host'], remotedb[0]['port'], sizechecksql)
-            dbsizequery = self.get_command_output("%s %s" % (command, opts))
+            dbsizequery = self.get_command_output("%s %s" % (mysql_command, command_opts))
             dbsize = int(dbsizequery['output'])
 
             if dbsize > 500000000:
                 self._log_warn("Database exceeds 500M, please perform mysqldump manually if requested")
             else:
-                command = "/opt/morpheus/embedded/bin/mysqldump"
-                if self.mysql_embedded:
-                    opts = "--skip-lock-tables --user %s -S %s morpheus" % (self.mysql_user, mysql_socket)
-                else:
-                    opts = "--skip-lock-tables --user %s -h %s -P %s %s" \
-                           % (self.mysql_user, remotedb[0]['host'], remotedb[0]['port'], remotedb[0]['path'])
-                self.add_cmd_output("%s %s" % (command, opts), sizelimit=500)
-        # else:
-        #     self.get_remote_details()
-        #     self.get_userpass()
+                mysql_dump_command = "/opt/morpheus/embedded/bin/mysqldump"
+
+                self.add_cmd_output("%s %s" % (mysql_dump_command, dump_opts), sizelimit=500)
 
     def postproc(self):
         self.do_file_sub("/opt/morpheus/embedded/mysql/ops-my.cnf",
