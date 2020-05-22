@@ -89,7 +89,7 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                                AND C.DATA_TYPE IN ('enum', 'varchar', 'char', 'text', 'mediumtext', 'longtext')
                                ORDER BY TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME;"""
 
-        self.add_cmd_output("%s %s '%s'" % (mysql_command, command_opts, cmd_check_charset),
+        self.add_cmd_output("%s %s \"%s\"" % (mysql_command, command_opts, cmd_check_charset),
                             suggest_filename="mysql_morpheus_charsets")
 
         if not self.get_option("nodbdump"):
@@ -97,7 +97,7 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                               FROM information_schema.tables  GROUP BY table_schema) t1;"""
             dbsizequery = self.get_command_output("%s -sN %s '%s'" % (mysql_command, command_opts, sizechecksql))
             dbsize = int(dbsizequery['output'])
-            self.add_string_as_file(dbsizequery, "morpheus_mysql_dbsize_in_B")
+            self.add_string_as_file(dbsizequery['output'], "morpheus_mysql_dbsize_in_B")
 
             if dbsize > 500000000:
                 self._log_warn("Database exceeds 500M, please perform mysqldump manually if requested")
