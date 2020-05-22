@@ -73,36 +73,31 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
         if self.mysql_embedded:
             mysql_socket = config.get('client', 'socket')
             dump_opts = "--skip-lock-tables --user %s -S %s morpheus" % (self.mysql_user, mysql_socket)
-            command_opts = "--user %s -S %s morpheus -sN -e " % (self.mysql_user, mysql_socket)
+            command_opts = "--user %s -S %s morpheus -e " % (self.mysql_user, mysql_socket)
         else:
             dump_opts = "--skip-lock-tables --user %s -h %s -P %s %s" \
                            % (self.mysql_user, remotedb[0]['host'], remotedb[0]['port'], remotedb[0]['path'])
-            command_opts = "--user %s -h %s -P %s -sN -e " \
+            command_opts = "--user %s -h %s -P %s -e " \
                            % (self.mysql_user, remotedb[0]['host'], remotedb[0]['port'])
-        cmd_check_charset = """SELECT TABLE_SCHEMA 
-       TABLE_NAME,
-       CCSA.CHARACTER_SET_NAME AS DEFAULT_CHAR_SET,
-       COLUMN_NAME,
-       COLUMN_TYPE,
-       C.CHARACTER_SET_NAME
-  FROM information_schema.TABLES AS T
-  JOIN information_schema.COLUMNS AS C USING (TABLE_SCHEMA, TABLE_NAME)
-  JOIN information_schema.COLLATION_CHARACTER_SET_APPLICABILITY AS CCSA
-       ON (T.TABLE_COLLATION = CCSA.COLLATION_NAME)
- WHERE TABLE_SCHEMA=SCHEMA()
-   AND C.DATA_TYPE IN ('enum', 'varchar', 'char', 'text', 'mediumtext', 'longtext')
- ORDER BY TABLE_SCHEMA,
-          TABLE_NAME,
-          COLUMN_NAME
-;"""
+        cmd_check_charset = """SELECT TABLE_SCHEMA TABLE_NAME, CCSA.CHARACTER_SET_NAME AS DEFAULT_CHAR_SET,
+                               COLUMN_NAME, COLUMN_TYPE, C.CHARACTER_SET_NAME
+                               FROM information_schema.TABLES AS T
+                               JOIN information_schema.COLUMNS AS C USING (TABLE_SCHEMA, TABLE_NAME)
+                               JOIN information_schema.COLLATION_CHARACTER_SET_APPLICABILITY AS CCSA
+                               ON (T.TABLE_COLLATION = CCSA.COLLATION_NAME)
+                               WHERE TABLE_SCHEMA=SCHEMA()
+                               AND C.DATA_TYPE IN ('enum', 'varchar', 'char', 'text', 'mediumtext', 'longtext')
+                               ORDER BY TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME;"""
+
         self.add_cmd_output("%s %s '%s'" % (mysql_command, command_opts, cmd_check_charset),
                             suggest_filename="mysql_morpheus_charsets")
 
         if not self.get_option("nodbdump"):
             sizechecksql = """select SUM(size) "total" from (select SUM(data_length + index_length) as "size"
                               FROM information_schema.tables  GROUP BY table_schema) t1;"""
-            dbsizequery = self.get_command_output("%s %s '%s'" % (mysql_command, command_opts, sizechecksql))
+            dbsizequery = self.get_command_output("%s -sN %s '%s'" % (mysql_command, command_opts, sizechecksql))
             dbsize = int(dbsizequery['output'])
+            self.add_string_as_file(dbsize, "morpheus_mysql_dbsize_in_B")
 
             if dbsize > 500000000:
                 self._log_warn("Database exceeds 500M, please perform mysqldump manually if requested")
