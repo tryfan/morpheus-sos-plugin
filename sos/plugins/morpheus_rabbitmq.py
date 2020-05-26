@@ -15,6 +15,8 @@ class MorpheusRabbitMQ(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
     rmq_config_file = ""
     morpheus_application_yml = "/opt/morpheus/conf/application.yml"
 
+    files = (morpheus_application_yml,)
+
     def check_rmq_embedded(self):
         rmq_status_local = self.get_command_output("morpheus-ctl status rabbitmq")
         if not rmq_status_local['output']:

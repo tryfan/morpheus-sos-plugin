@@ -22,6 +22,8 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
     mysql_pass = ""
     tmpfilen = ""
 
+    files = (morpheus_application_yml,)
+
     def check_mysql_embedded(self):
         mysql_status_local = self.get_command_output("morpheus-ctl status mysql")
         if not mysql_status_local['output']:

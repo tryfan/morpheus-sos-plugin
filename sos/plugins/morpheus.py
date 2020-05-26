@@ -8,6 +8,8 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
     plugin_name = "morpheus"
     profiles = ('services', )
 
+    packages = ('morpheus-appliance',)
+
     def setup(self):
         self.add_copy_spec("/etc/morpheus/*")
         self.add_copy_spec("/opt/morpheus/version-manifest.json")

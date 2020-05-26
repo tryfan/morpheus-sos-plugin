@@ -15,6 +15,8 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
     es_config_file = ""
     morpheus_application_yml = "/opt/morpheus/conf/application.yml"
 
+    files = (morpheus_application_yml,)
+
     def check_es_embedded(self):
         es_status_local = self.get_command_output("morpheus-ctl status elasticsearch")
         if not es_status_local['output']:
@@ -24,7 +26,6 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
         if os.path.isfile(self.morpheus_application_yml):
             with open(self.morpheus_application_yml) as appyml:
                 appyml_data = yaml.load(appyml, Loader=yaml.Loader)
-
         es_hosts = []
         es_config = appyml_data['environments']['production']['elasticSearch']
         es_host_detail = es_config['client']['hosts']
@@ -89,6 +90,7 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
             self.get_morpheus_logs(endpoint)
         else:
             es_hosts = self.get_remote_hostnames_ports()
+
             runonce = True
             for hp in es_hosts:
                 endpoint = str(hp['host']) + ":" + str(hp['port'])
