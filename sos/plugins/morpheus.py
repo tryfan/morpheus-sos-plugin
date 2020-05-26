@@ -17,6 +17,7 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
         self.add_copy_spec("/opt/morpheus/conf/logback.groovy")
         self.add_copy_spec("/opt/morpheus/conf/check-server-config.groovy")
         self.add_copy_spec("/opt/morpheus/embedded/cookbooks/chef-run.log")
+        self.add_copy_spec("/var/log/morpheus/morpheus-ui/current")
         self.add_forbidden_path("/etc/morpheus/ssl/*")
         self.add_forbidden_path("/etc/morpheus/morpheus-secrets.json")
         self.add_cmd_output([
