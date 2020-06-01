@@ -72,11 +72,21 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
             datelist.append("logs." + moddate.strftime("%Y%m%d"))
 
         for day in datelist:
-            self.add_cmd_output(
-                "curl -s -X GET '%s/%s/_search?pretty&size=10000' -H 'Content-Type: application/json' -d '%s'"
-                % (endpoint, day, json_options),
-                suggest_filename="morpheus_" + day
-            )
+            if self.protocol == "http":
+                self.add_cmd_output(
+                    "curl -s -X GET '%s/%s/_search?pretty&size=10000' -H 'Content-Type: application/json' -d '%s'"
+                    % (endpoint, day, json_options),
+                    suggest_filename="morpheus_" + day
+                )
+            else:
+                headers = {'Content-Type': 'application/json'}
+                req = requests.get("%s/%s/_search?pretty&size=10000"
+                                   % (endpoint, day),
+                                   auth=(self.es_user, self.es_password),
+                                   headers=headers,
+                                   data=json_options,
+                                   verify=False)
+                self.add_string_as_file(req.text, "morpheus_" + day)
 
     def setup(self):
         self.check_es_embedded()
@@ -122,33 +132,19 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                                        verify=False,
                                        auth=(self.es_user, self.es_password))
                     self.add_string_as_file(req.text, "%s_get_cluster_settings" % str(hp['host']))
-                    # self.add_cmd_output("curl -k -X GET '%s/_cluster/settings?pretty'" % endpoint,
-                    #                     suggest_filename="%s_get_cluster_settings" % str(hp['host']))
                     req = requests.get(endpoint + "/_cluster/health?pretty",
                                        verify=False,
                                        auth=(self.es_user, self.es_password))
                     self.add_string_as_file(req.text, "%s_get_cluster_health" % str(hp['host']))
-                    # self.add_cmd_output("curl -k -X GET '%s/_cluster/health?pretty'" % endpoint,
-                    #                     suggest_filename="%s_get_cluster_health" % str(hp['host']))
                     req = requests.get(endpoint + "/_cluster/stats?pretty",
                                        verify=False,
                                        auth=(self.es_user, self.es_password))
                     self.add_string_as_file(req.text, "%s_get_cluster_stats" % str(hp['host']))
-                    # self.add_cmd_output("curl -k -X GET '%s/_cluster/stats?pretty'" % endpoint,
-                    #                     suggest_filename="%s_get_cluster_stats" % str(hp['host']))
                     req = requests.get(endpoint + "/_cat/nodes?v",
                                        verify=False,
                                        auth=(self.es_user, self.es_password))
                     self.add_string_as_file(req.text, "%s_get_nodes" % str(hp['host']))
-                    # self.add_cmd_output("curl -k -X GET '%s/_cat/nodes?v'" % endpoint,
-                    #                     suggest_filename="%s_get_nodes" % str(hp['host']))
 
-                # self.add_cmd_output([
-                #     "curl -k -X GET '%s/_cluster/settings?pretty'" % endpoint,
-                #     "curl -k -X GET '%s/_cluster/health?pretty'" % endpoint,
-                #     "curl -k -X GET '%s/_cluster/stats?pretty'" % endpoint,
-                #     "curl -k -X GET '%s/_cat/nodes?v'" % endpoint,
-                # ])
                 if runonce:
                     self.get_morpheus_logs(endpoint)
                     runonce = False
