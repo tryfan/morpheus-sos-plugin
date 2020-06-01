@@ -32,6 +32,10 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                          r"password: ([\"'])(?:(?=(\\?))\2.)*?\1",
                          r"password: '***REDACTED***'")
 
+        self.do_file_sub("/opt/morpheus/conf/application.yml",
+                         r"password: ['\"]{0}(?P<password>[^\n,'\"]+)['\"]{0}",
+                         r"password: ***REDACTED***")
+
         self.do_file_sub("/etc/morpheus/morpheus.rb",
                          r"password'] = ([\"'])(?:(?=(\\?))\2.)*?\1",
                          r"password'] = '***REDACTED***'")
