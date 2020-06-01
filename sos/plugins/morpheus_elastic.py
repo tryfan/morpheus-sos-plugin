@@ -2,6 +2,11 @@ from sos.plugins import Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin
 import os
 import yaml
 import datetime
+try:
+    import requests
+    REQUESTS_LOADED = True
+except ImportError:
+    REQUESTS_LOADED = False
 
 
 class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
@@ -14,6 +19,10 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
     es_embedded = True
     es_config_file = ""
     morpheus_application_yml = "/opt/morpheus/conf/application.yml"
+
+    protocol = "http"
+    es_user = None
+    es_password = None
 
     files = (morpheus_application_yml,)
 
@@ -28,6 +37,10 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                 appyml_data = yaml.load(appyml, Loader=yaml.Loader)
         es_hosts = []
         es_config = appyml_data['environments']['production']['elasticSearch']
+        if "protocol" in es_config.keys():
+            self.protocol = es_config['protocol']
+            self.es_user = es_config['user']
+            self.es_password = es_config['password']
         es_host_detail = es_config['client']['hosts']
         return es_host_detail
 
@@ -39,7 +52,7 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
         es_config = appyml_data['environments']['production']['elasticSearch']
         hostname = es_config['client']['hosts'][0]['host']
         port = es_config['client']['hosts'][0]['port']
-        return str(hostname), str(port)
+        return str(hostname), str(port), str(protocol)
 
     def get_morpheus_logs(self, endpoint):
         json_options = """
@@ -93,13 +106,41 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
 
             runonce = True
             for hp in es_hosts:
-                endpoint = str(hp['host']) + ":" + str(hp['port'])
-                self.add_cmd_output([
-                    "curl -X GET '%s/_cluster/settings?pretty'" % endpoint,
-                    "curl -X GET '%s/_cluster/health?pretty'" % endpoint,
-                    "curl -X GET '%s/_cluster/stats?pretty'" % endpoint,
-                    "curl -X GET '%s/_cat/nodes?v'" % endpoint,
-                ])
+                if self.protocol == "http":
+                    endpoint = str(hp['host']) + ":" + str(hp['port'])
+                    self.add_cmd_output("curl -k -X GET '%s/_cluster/settings?pretty'" % endpoint,
+                                        suggest_filename="%s_get_cluster_settings" % str(hp['host']))
+                    self.add_cmd_output("curl -k -X GET '%s/_cluster/health?pretty'" % endpoint,
+                                        suggest_filename="%s_get_cluster_health" % str(hp['host']))
+                    self.add_cmd_output("curl -k -X GET '%s/_cluster/stats?pretty'" % endpoint,
+                                        suggest_filename="%s_get_cluster_stats" % str(hp['host']))
+                    self.add_cmd_output("curl -k -X GET '%s/_cat/nodes?v'" % endpoint,
+                                        suggest_filename="%s_get_nodes" % str(hp['host']))
+                else:
+                    endpoint = self.protocol + "://" + str(hp['host']) + ":" + str(hp['port'])
+                    req = requests.get(endpoint + "/_cluster/settings?pretty", auth=(self.es_user, self.es_password))
+                    self.add_string_as_file(req.text, "%s_get_cluster_settings" % str(hp['host']))
+                    # self.add_cmd_output("curl -k -X GET '%s/_cluster/settings?pretty'" % endpoint,
+                    #                     suggest_filename="%s_get_cluster_settings" % str(hp['host']))
+                    req = requests.get(endpoint + "/_cluster/health?pretty", auth=(self.es_user, self.es_password))
+                    self.add_string_as_file(req.text, "%s_get_cluster_settings" % str(hp['host']))
+                    # self.add_cmd_output("curl -k -X GET '%s/_cluster/health?pretty'" % endpoint,
+                    #                     suggest_filename="%s_get_cluster_health" % str(hp['host']))
+                    req = requests.get(endpoint + "/_cluster/stats?pretty", auth=(self.es_user, self.es_password))
+                    self.add_string_as_file(req.text, "%s_get_cluster_stats" % str(hp['host']))
+                    # self.add_cmd_output("curl -k -X GET '%s/_cluster/stats?pretty'" % endpoint,
+                    #                     suggest_filename="%s_get_cluster_stats" % str(hp['host']))
+                    req = requests.get(endpoint + "/_cat/nodes?v", auth=(self.es_user, self.es_password))
+                    self.add_string_as_file(req.text, "%s_get_nodes" % str(hp['host']))
+                    # self.add_cmd_output("curl -k -X GET '%s/_cat/nodes?v'" % endpoint,
+                    #                     suggest_filename="%s_get_nodes" % str(hp['host']))
+
+                # self.add_cmd_output([
+                #     "curl -k -X GET '%s/_cluster/settings?pretty'" % endpoint,
+                #     "curl -k -X GET '%s/_cluster/health?pretty'" % endpoint,
+                #     "curl -k -X GET '%s/_cluster/stats?pretty'" % endpoint,
+                #     "curl -k -X GET '%s/_cat/nodes?v'" % endpoint,
+                # ])
                 if runonce:
                     self.get_morpheus_logs(endpoint)
                     runonce = False
