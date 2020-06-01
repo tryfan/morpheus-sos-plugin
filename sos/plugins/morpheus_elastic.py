@@ -127,7 +127,7 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                     req = requests.get(endpoint + "/_cluster/health?pretty",
                                        verify=False,
                                        auth=(self.es_user, self.es_password))
-                    self.add_string_as_file(req.text, "%s_get_cluster_settings" % str(hp['host']))
+                    self.add_string_as_file(req.text, "%s_get_cluster_health" % str(hp['host']))
                     # self.add_cmd_output("curl -k -X GET '%s/_cluster/health?pretty'" % endpoint,
                     #                     suggest_filename="%s_get_cluster_health" % str(hp['host']))
                     req = requests.get(endpoint + "/_cluster/stats?pretty",
