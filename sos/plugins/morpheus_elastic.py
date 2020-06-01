@@ -118,19 +118,27 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                                         suggest_filename="%s_get_nodes" % str(hp['host']))
                 else:
                     endpoint = self.protocol + "://" + str(hp['host']) + ":" + str(hp['port'])
-                    req = requests.get(endpoint + "/_cluster/settings?pretty", auth=(self.es_user, self.es_password))
+                    req = requests.get(endpoint + "/_cluster/settings?pretty",
+                                       verify=False,
+                                       auth=(self.es_user, self.es_password))
                     self.add_string_as_file(req.text, "%s_get_cluster_settings" % str(hp['host']))
                     # self.add_cmd_output("curl -k -X GET '%s/_cluster/settings?pretty'" % endpoint,
                     #                     suggest_filename="%s_get_cluster_settings" % str(hp['host']))
-                    req = requests.get(endpoint + "/_cluster/health?pretty", auth=(self.es_user, self.es_password))
+                    req = requests.get(endpoint + "/_cluster/health?pretty",
+                                       verify=False,
+                                       auth=(self.es_user, self.es_password))
                     self.add_string_as_file(req.text, "%s_get_cluster_settings" % str(hp['host']))
                     # self.add_cmd_output("curl -k -X GET '%s/_cluster/health?pretty'" % endpoint,
                     #                     suggest_filename="%s_get_cluster_health" % str(hp['host']))
-                    req = requests.get(endpoint + "/_cluster/stats?pretty", auth=(self.es_user, self.es_password))
+                    req = requests.get(endpoint + "/_cluster/stats?pretty",
+                                       verify=False,
+                                       auth=(self.es_user, self.es_password))
                     self.add_string_as_file(req.text, "%s_get_cluster_stats" % str(hp['host']))
                     # self.add_cmd_output("curl -k -X GET '%s/_cluster/stats?pretty'" % endpoint,
                     #                     suggest_filename="%s_get_cluster_stats" % str(hp['host']))
-                    req = requests.get(endpoint + "/_cat/nodes?v", auth=(self.es_user, self.es_password))
+                    req = requests.get(endpoint + "/_cat/nodes?v",
+                                       verify=False,
+                                       auth=(self.es_user, self.es_password))
                     self.add_string_as_file(req.text, "%s_get_nodes" % str(hp['host']))
                     # self.add_cmd_output("curl -k -X GET '%s/_cat/nodes?v'" % endpoint,
                     #                     suggest_filename="%s_get_nodes" % str(hp['host']))
