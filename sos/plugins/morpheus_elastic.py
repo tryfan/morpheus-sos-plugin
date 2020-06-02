@@ -2,11 +2,17 @@ from sos.plugins import Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin
 import os
 import yaml
 import datetime
+import urllib3
 try:
     import requests
     REQUESTS_LOADED = True
 except ImportError:
     REQUESTS_LOADED = False
+
+try:
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+except:
+    pass
 
 
 class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
@@ -52,7 +58,7 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
         es_config = appyml_data['environments']['production']['elasticSearch']
         hostname = es_config['client']['hosts'][0]['host']
         port = es_config['client']['hosts'][0]['port']
-        return str(hostname), str(port), str(protocol)
+        return str(hostname), str(port)
 
     def get_morpheus_logs(self, endpoint):
         json_options = """
@@ -79,14 +85,15 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                     suggest_filename="morpheus_" + day
                 )
             else:
-                headers = {'Content-Type': 'application/json'}
-                req = requests.get("%s/%s/_search?pretty&size=10000"
-                                   % (endpoint, day),
-                                   auth=(self.es_user, self.es_password),
-                                   headers=headers,
-                                   data=json_options,
-                                   verify=False)
-                self.add_string_as_file(req.text, "morpheus_" + day)
+                if REQUESTS_LOADED:
+                    headers = {'Content-Type': 'application/json'}
+                    req = requests.get("%s/%s/_search?pretty&size=10000"
+                                       % (endpoint, day),
+                                       auth=(self.es_user, self.es_password),
+                                       headers=headers,
+                                       data=json_options,
+                                       verify=False)
+                    self.add_string_as_file(req.text, "morpheus_" + day)
 
     def setup(self):
         self.check_es_embedded()
@@ -127,23 +134,24 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                     self.add_cmd_output("curl -k -X GET '%s/_cat/nodes?v'" % endpoint,
                                         suggest_filename="%s_get_nodes" % str(hp['host']))
                 else:
-                    endpoint = self.protocol + "://" + str(hp['host']) + ":" + str(hp['port'])
-                    req = requests.get(endpoint + "/_cluster/settings?pretty",
-                                       verify=False,
-                                       auth=(self.es_user, self.es_password))
-                    self.add_string_as_file(req.text, "%s_get_cluster_settings" % str(hp['host']))
-                    req = requests.get(endpoint + "/_cluster/health?pretty",
-                                       verify=False,
-                                       auth=(self.es_user, self.es_password))
-                    self.add_string_as_file(req.text, "%s_get_cluster_health" % str(hp['host']))
-                    req = requests.get(endpoint + "/_cluster/stats?pretty",
-                                       verify=False,
-                                       auth=(self.es_user, self.es_password))
-                    self.add_string_as_file(req.text, "%s_get_cluster_stats" % str(hp['host']))
-                    req = requests.get(endpoint + "/_cat/nodes?v",
-                                       verify=False,
-                                       auth=(self.es_user, self.es_password))
-                    self.add_string_as_file(req.text, "%s_get_nodes" % str(hp['host']))
+                    if REQUESTS_LOADED:
+                        endpoint = self.protocol + "://" + str(hp['host']) + ":" + str(hp['port'])
+                        req = requests.get(endpoint + "/_cluster/settings?pretty",
+                                           verify=False,
+                                           auth=(self.es_user, self.es_password))
+                        self.add_string_as_file(req.text, "%s_get_cluster_settings" % str(hp['host']))
+                        req = requests.get(endpoint + "/_cluster/health?pretty",
+                                           verify=False,
+                                           auth=(self.es_user, self.es_password))
+                        self.add_string_as_file(req.text, "%s_get_cluster_health" % str(hp['host']))
+                        req = requests.get(endpoint + "/_cluster/stats?pretty",
+                                           verify=False,
+                                           auth=(self.es_user, self.es_password))
+                        self.add_string_as_file(req.text, "%s_get_cluster_stats" % str(hp['host']))
+                        req = requests.get(endpoint + "/_cat/nodes?v",
+                                           verify=False,
+                                           auth=(self.es_user, self.es_password))
+                        self.add_string_as_file(req.text, "%s_get_nodes" % str(hp['host']))
 
                 if runonce:
                     self.get_morpheus_logs(endpoint)
