@@ -89,12 +89,17 @@ class MorpheusElastic(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
             else:
                 if REQUESTS_LOADED:
                     headers = {'Content-Type': 'application/json'}
-                    req = requests.get("%s/%s/_search?pretty&size=10000"
-                                       % (endpoint, day),
-                                       auth=(self.es_user, self.es_password),
-                                       headers=headers,
-                                       json=json_options,
-                                       verify=False)
+                    if self.es_user and self.es_password:
+                        req = requests.get("%s/%s/_search?pretty&size=10000&sort=ts"
+                                           % (endpoint, day),
+                                           auth=(self.es_user, self.es_password),
+                                           headers=headers,
+                                           verify=False)
+                    else:
+                        req = requests.get("%s/%s/_search?pretty&size=10000&sort=ts"
+                                           % (endpoint, day),
+                                           headers=headers,
+                                           verify=False)
                     self.add_string_as_file(req.text, "morpheus_" + day)
 
     def setup(self):
