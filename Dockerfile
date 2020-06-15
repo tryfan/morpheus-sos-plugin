@@ -9,6 +9,10 @@ VOLUME /dist
 ADD . /source
 WORKDIR /source
 
-RUN python setup.py bdist_rpm
+ARG argrelnum=1
+
+ENV relnum $argrelnum
+
+RUN python setup.py bdist_rpm --release $relnum
 
 CMD ["bash", "-c", "cp -f /source/dist/*.rpm /dist"]

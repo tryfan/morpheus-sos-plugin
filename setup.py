@@ -5,6 +5,7 @@ import subprocess
 from setuptools import setup
 
 __version__ = '0.0.2'
+__release__ = '2'
 
 setup(name='morpheus-sos-plugin',
       version=__version__,
