@@ -90,9 +90,12 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
                                WHERE TABLE_SCHEMA=SCHEMA()
                                AND C.DATA_TYPE IN ('enum', 'varchar', 'char', 'text', 'mediumtext', 'longtext')
                                ORDER BY TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME;"""
+        cmd_check_status = "STATUS;"
 
         self.add_cmd_output("%s %s \"%s\"" % (mysql_command, command_opts, cmd_check_charset),
                             suggest_filename="mysql_morpheus_charsets")
+        self.add_cmd_output("%s %s \"%s\"" % (mysql_command, command_opts, cmd_check_status),
+                            suggest_filename="mysql_morpheus_status")
 
         if not self.get_option("nodbdump"):
             sizechecksql = """select SUM(size) "total" from (select SUM(data_length + index_length) as "size"
@@ -101,12 +104,12 @@ class Morpheus(Plugin, RedHatPlugin, DebianPlugin, UbuntuPlugin):
             dbsize = int(dbsizequery['output'])
             self.add_string_as_file(dbsizequery['output'], "morpheus_mysql_dbsize_in_B")
 
-            if dbsize > 500000000:
-                self._log_warn("Database exceeds 500M, please perform mysqldump manually if requested")
+            if dbsize > 800000000:
+                self._log_warn("Database exceeds 800M, please perform mysqldump manually if requested")
             else:
                 mysql_dump_command = "/opt/morpheus/embedded/bin/mysqldump"
 
-                self.add_cmd_output("%s %s" % (mysql_dump_command, dump_opts), sizelimit=500)
+                self.add_cmd_output("%s %s" % (mysql_dump_command, dump_opts), sizelimit=800)
 
     def postproc(self):
         self.do_file_sub("/opt/morpheus/embedded/mysql/ops-my.cnf",
