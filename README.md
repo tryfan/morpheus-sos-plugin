@@ -5,7 +5,7 @@
 ```
 docker build -t sosbuild .
 mkdir build
-docker run -v /home/ncelebic/morpheus-sos-plugin/build:/dist sosbuild
+docker run -v <path>/morpheus-sos-plugin/build:/dist sosbuild
 ```
 RPMs located in ./build
 
