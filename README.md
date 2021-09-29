@@ -1,5 +1,14 @@
 # morpheus-sos-plugin
 
+## Requirements
+RHEL, CentOS, or other RPM based operating systems with `sos` and `python2.7` installed.
+
+## Install
+`yum install https://github.com/tryfan/morpheus-sos-plugin/releases/download/v0.0.2/morpheus-sos-plugin-0.0.2-2.noarch.rpm`
+
+## Run
+`sosreport`
+
 ## Build
 
 ```
